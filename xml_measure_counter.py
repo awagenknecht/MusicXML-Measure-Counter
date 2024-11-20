@@ -15,33 +15,38 @@ class App:
         tk.Label(self.master, text="Folder path:").grid(row=0, column=0, sticky="W")
         self.folder_path = tk.StringVar()
         tk.Entry(self.master, textvariable=self.folder_path, width=50).grid(row=1, column=0, padx=10, pady=5)
+
+        # Parts to exclude label and textbox
+        tk.Label(self.master, text="Part names to exclude (separated by commas):").grid(row=2, column=0, sticky="W")
+        self.parts_to_exclude = tk.StringVar()
+        tk.Entry(self.master, textvariable=self.parts_to_exclude, width=50).grid(row=3, column=0, padx=10, pady=5)
         
         # Browse button
         tk.Button(self.master, text="Browse...", command=self.browse_folder).grid(row=1, column=1, padx=10, pady=5)
         
         # Process button
-        tk.Button(self.master, text="Process", command=self.process_files).grid(row=2, column=0, padx=10, pady=5)
+        tk.Button(self.master, text="Process", command=self.process_files).grid(row=4, column=0, padx=10, pady=5)
         
         # Reset button
         tk.Button(self.master, text="Reset", command=self.reset).grid(row=2, column=1, padx=10, pady=5)
-        
+
         # Status label
         self.status_label = tk.Label(self.master, text="")
-        self.status_label.grid(row=3, column=0, padx=10, pady=5)
+        self.status_label.grid(row=5, column=0, padx=10, pady=5)
         
         # Progress bar
         self.progress_bar = ttk.Progressbar(self.master, orient="horizontal", mode="determinate", maximum=100)
-        self.progress_bar.grid(row=4, column=0, padx=10, pady=5)
+        self.progress_bar.grid(row=6, column=0, padx=10, pady=5)
         self.progress_var = tk.DoubleVar()
         
         # Processed files counter
         self.processed_files_label = tk.Label(self.master, text="")
-        self.processed_files_label.grid(row=5, column=0, padx=10, pady=5)
+        self.processed_files_label.grid(row=7, column=0, padx=10, pady=5)
         self.file_count = 0
         
         # Total measures counter
         self.total_measures_label = tk.Label(self.master, text="")
-        self.total_measures_label.grid(row=6, column=0, padx=10, pady=5)
+        self.total_measures_label.grid(row=8, column=0, padx=10, pady=5)
         self.total_measures = 0
     
     def browse_folder(self):
@@ -108,10 +113,16 @@ class App:
         self.total_measures += total_measures
         self.total_measures_label.config(text=f"Total measures: {self.total_measures}")
     
+    def parse_parts_to_exclude(self, parts_to_exclude):
+        return set([part.strip() for part in parts_to_exclude.split(",")])
 
     def get_total_measures(self, score):
         total_measures = 0
+        exclude_parts = self.parse_parts_to_exclude(self.parts_to_exclude.get())
         for part in score.parts:
+            # match to partName rather than id to handle grouped staves (e.g. Piano)
+            if part.partName in exclude_parts:
+                continue
             for measure in part.getElementsByClass('Measure'):
                 if measure.barDurationProportion() != 1.0:
                     continue
